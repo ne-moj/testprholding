@@ -65,6 +65,18 @@ class SiteController extends Controller
     }
 
     /**
+     * Show tree
+     *
+     * @param string $message
+     */
+    public function actionShowTree($width = 300, $height = 400)
+    {
+        $urlPathToImage = $this->getUrlAddressToTreeImage((int) $width, (int) $height);
+
+        return $this->render('tree', ['image' => $urlPathToImage]);
+    }
+
+    /**
      * Login action.
      *
      * @return Response|string
@@ -124,5 +136,85 @@ class SiteController extends Controller
     public function actionAbout()
     {
         return $this->render('about');
+    }
+
+    /**
+     * Create a tree
+     *
+     * @param int $width
+     * @param int $height
+     */
+    public function createTree($width = 300, $height = 200, $padding = 30)
+    {
+        $relativePathToImage = '/images/tree' . $width . 'x' . $height . '.jpg';
+
+        $pathToImage = Yii::getAlias('@webroot') . $relativePathToImage;
+
+        $colors = [
+            'background' => [240, 255, 255],
+            'trunk'      => [139, 69, 19],
+            'crown'      => [0, 100, 0],
+        ];
+
+        // The parameter indicates how many times the image is enlarged
+        $size2X = 4;
+
+        $widthImage  = $width * 2 + $padding * 2;
+        $heightImage = $height * 3 + $padding;
+
+        $widthImage2X = $widthImage * $size2X;
+        $heightImage2X = $heightImage * $size2X;
+
+        $centerTreeX2X = ($width + $padding) * $size2X;
+        $centerTreeY2X = ($height + $padding) * $size2X;
+
+        $widthTrunk2X = ((sqrt($width * $width + $height * $height) / 5) * $size2X);
+
+        $trunk2X = [
+            $centerTreeX2X - ($widthTrunk2X / 2), $heightImage2X,
+            $centerTreeX2X, $centerTreeY2X,
+            $centerTreeX2X + ($widthTrunk2X / 2), $heightImage2X,
+        ];
+
+        // create an empty image $size2X times larger than necessary
+        $image2X = imagecreatetruecolor($widthImage2X, $heightImage2X);
+
+        // set background color
+        $bg = imagecolorallocate($image2X, $colors['background'][0], $colors['background'][1], $colors['background'][2]);
+
+        // set color for the trunk
+        $colTrunk = imagecolorallocate($image2X, $colors['trunk'][0], $colors['trunk'][1], $colors['trunk'][2]);
+
+        // set color crown
+        $colCrown = imagecolorallocate($image2X, $colors['crown'][0], $colors['crown'][1], $colors['crown'][2]);
+
+        // background fill
+        imagefilledrectangle($image2X, 0, 0, $widthImage2X - 1, $heightImage2X - 1, $bg);
+
+        // create trunk
+        imagefilledpolygon($image2X, $trunk2X, 3, $colTrunk);
+
+        // create crown
+        imagefilledellipse($image2X, $centerTreeX2X, $centerTreeY2X, ($width * 2) * $size2X, ($height * 2) * $size2X, $colCrown);
+
+        // сompress the image to the desired size
+        $imageOut = imagecreatetruecolor($widthImage, $heightImage);
+        imagecopyresampled($imageOut, $image2X, 0, 0, 0, 0, $widthImage, $heightImage, $widthImage2X, $heightImage2X);
+
+        imagejpeg($imageOut, $pathToImage);
+        imagedestroy($imageOut);
+    }
+
+    public function getUrlAddressToTreeImage($width, $height)
+    {
+        $relativePathToImage = '/images/tree' . $width . 'x' . $height . '.jpg';
+        $pathToImage = Yii::getAlias('@webroot') . $relativePathToImage;
+        $urlPathToImage = Yii::getAlias('@web') . $relativePathToImage;
+
+        if(!file_exists($pathToImage)){
+            $this->createTree($width, $height);
+        }
+
+        return $urlPathToImage;
     }
 }

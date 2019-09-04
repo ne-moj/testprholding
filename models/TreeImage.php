@@ -40,6 +40,12 @@ class TreeImage
         }
     }
 
+    /**
+     * Save image to file
+     *
+     * @param string $file
+     * @param string $type
+     */
     public function saveToFile($file, $type = 'jpg')
     {
         switch($type){
@@ -77,12 +83,15 @@ class TreeImage
         $backgroundColor = $this->backgroundColor;
         $trunkColor      = $this->trunkColor;
         $crownColor      = $this->crownColor;
+        $halfWidth       = $width / 2;
+        $halfHeight      = $height / 2;
+        $heightTrunk     = $halfHeight;
 
         // The parameter indicates how many times the image is enlarged
         $size2X = $this->smoothing;
 
-        $widthImage  = $width * 2 + $padding * 2;
-        $heightImage = $height * 3 + $padding;
+        $widthImage  = $width + $padding * 2;
+        $heightImage = $height + $heightTrunk + $padding;
 
         $widthImage2X = $widthImage * $size2X;
         $heightImage2X = $heightImage * $size2X;
@@ -90,7 +99,7 @@ class TreeImage
         $centerTreeX2X = ($width + $padding) * $size2X;
         $centerTreeY2X = ($height + $padding) * $size2X;
 
-        $widthTrunk2X = ((sqrt($width * $width + $height * $height) / 6) * $size2X);
+        $widthTrunk2X = ((sqrt($halfWidth * $halfWidth + $halfHeight * $halfHeight) / 6) * $size2X);
 
         $trunk2X = [
             $centerTreeX2X - ($widthTrunk2X / 2), $heightImage2X,
@@ -117,7 +126,7 @@ class TreeImage
         imagefilledpolygon($image2X, $trunk2X, 3, $colTrunk);
 
         // create crown
-        imagefilledellipse($image2X, $centerTreeX2X, $centerTreeY2X, ($width * 2) * $size2X, ($height * 2) * $size2X, $colCrown);
+        imagefilledellipse($image2X, $centerTreeX2X, $centerTreeY2X, $width * $size2X, $height * $size2X, $colCrown);
 
         // сompress the image to the desired size
         $this->image = imagecreatetruecolor($widthImage, $heightImage);

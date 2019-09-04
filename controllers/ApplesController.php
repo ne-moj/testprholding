@@ -17,4 +17,12 @@ class ApplesController extends Controller
         $apples = Apples::find()->orderBy('created_at')->all();
         return $this->render('index', ['apples' => $apples]);
     }
+
+    public function actionGenerate()
+    {
+        $apple = new Apples();
+        $apple->generateApples();
+
+        return $this->actionIndex();
+    }
 }

@@ -30,13 +30,13 @@ class TreeController extends Controller
     {
         $width = (int)$width;
         $height = (int)$height;
-        $relativePath = '/images/tree_' . $width . 'x' . $height . '300.jpg';
+        $relativePath = '/images/tree_' . $width . 'x' . $height . '.png';
         $pathToFile = Yii::getAlias('@webroot') . $relativePath;
         $urlPath = Yii::getAlias('@web') . $relativePath;
 
         if(!file_exists($pathToFile)){
             $image = new TreeImage(['width' => $width, 'height' => $height]);
-            $image->create()->saveToFile($pathToFile);
+            $image->create()->saveToFile($pathToFile, 'png');
         }
 
         return $urlPath;

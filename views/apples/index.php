@@ -1,6 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
+use yii\helpers\Html;
 
 $this->title = 'Apples';
 ?>
@@ -29,18 +30,61 @@ $this->title = 'Apples';
 
 <?php
     else:
-        foreach($apples as $apple):
 ?>
+        <?= Html::img('/images/tree_200x500.png') ?>
         <div class="row">
             <div class="col-lg-12">
-                <?php var_dump($apple); ?>
-            </div>
-        </div>
+<?php
+        foreach($apples as $apple):
+?>
+<div class='apple' style="background-color: <?= $apple->color ?>; width:16px; height:16px; border-radius:8px;position:absolute;top:-<?= $apple->pos_y + 8; ?>px;left:<?= $apple->pos_x + 8; ?>px"></div>
 <?php
         endforeach;
 ?>
+            </div>
+        </div>
 <?php
     endif;
 ?>
     </div>
 </div>
+<script>
+    function animate(options) {
+        let start = performance.now();
+
+        requestAnimationFrame(function animate(time) {
+            // timeFraction от 0 до 1
+            let timeFraction = (time - start) / options.duration;
+            if (timeFraction > 1) timeFraction = 1;
+
+            // текущее состояние анимации
+            let progress = options.timing(timeFraction)
+            
+            options.draw(progress);
+
+            if (timeFraction < 1) {
+            requestAnimationFrame(animate);
+            }
+
+        });
+    }
+    $('document').ready(function() {
+        $('.apple').click(function() {
+            let appleDiv = this;
+            let posX = parseInt(appleDiv.style.top);
+
+            console.log(posX);
+
+            animate({
+                duration: 1000,
+                timing: function (timeFraction) {
+                    return Math.pow(timeFraction, 10);
+                },
+                draw: function (progress) {
+                    appleDiv.style.top = posX - progress * posX + 'px';
+                }
+
+            });
+        });
+    });
+</script>

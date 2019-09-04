@@ -14,12 +14,13 @@ class TreeImage
 {
     private $image = null;
 
-    public $backgroundColor = '#f0ffff';
+    public $backgroundAlpha = 127;
+    public $backgroundColor = '#ffffff';
     public $trunkColor      = '#8b4513';
     public $crownColor      = '#006400';
     public $width           = 200;
     public $height          = 200;
-    public $padding         = 20;
+    public $padding         = 0;
 
     public $smoothing       = 4;
 
@@ -29,6 +30,7 @@ class TreeImage
         $this->height          = !empty($params['height'])          ? $params['height']          : $this->height;
         $this->padding         = !empty($params['padding'])         ? $params['padding']         : $this->padding;
         $this->backgroundColor = !empty($params['backgroundColor']) ? $params['backgroundColor'] : $this->backgroundColor;
+        $this->backgroundAlpha = !empty($params['backgroundAlpha']) ? $params['backgroundAlpha'] : $this->backgroundAlpha;
         $this->trunkColor      = !empty($params['trunkColor'])      ? $params['trunkColor']      : $this->trunkColor;
         $this->crownColor      = !empty($params['crownColor'])      ? $params['crownColor']      : $this->crownColor;
     }
@@ -46,13 +48,9 @@ class TreeImage
      * @param string $file
      * @param string $type
      */
-    public function saveToFile($file, $type = 'jpg')
+    public function saveToFile($file, $type = 'png')
     {
         switch($type){
-            case 'png':
-                imagepng($this->image, $file);
-                break;
-
             case 'gif':
                 imagegif($this->image, $file);
                 break;
@@ -67,8 +65,12 @@ class TreeImage
 
             case 'jpg':
             case 'jpeg':
-            default:
                 imagejpeg($this->image, $file);
+                break;
+
+            case 'png':
+            default:
+                imagepng($this->image, $file);
         }
     }
 
@@ -81,6 +83,7 @@ class TreeImage
         $height          = $this->height;
         $padding         = $this->padding;
         $backgroundColor = $this->backgroundColor;
+        $backgroundAlpha = $this->backgroundAlpha;
         $trunkColor      = $this->trunkColor;
         $crownColor      = $this->crownColor;
         $halfWidth       = $width / 2;
@@ -96,8 +99,8 @@ class TreeImage
         $widthImage2X = $widthImage * $size2X;
         $heightImage2X = $heightImage * $size2X;
 
-        $centerTreeX2X = ($width + $padding) * $size2X;
-        $centerTreeY2X = ($height + $padding) * $size2X;
+        $centerTreeX2X = ($halfWidth + $padding) * $size2X;
+        $centerTreeY2X = ($halfHeight + $padding) * $size2X;
 
         $widthTrunk2X = ((sqrt($halfWidth * $halfWidth + $halfHeight * $halfHeight) / 6) * $size2X);
 
@@ -110,8 +113,10 @@ class TreeImage
         // create an empty image $size2X times larger than necessary
         $image2X = imagecreatetruecolor($widthImage2X, $heightImage2X);
 
+        imagesavealpha($image2X, true);
+
         // set background color
-        $bg = imagecolorallocate($image2X, $this->getRedColor($backgroundColor), $this->getGreenColor($backgroundColor), $this->getBlueColor($backgroundColor));
+        $bg = imagecolorallocatealpha($image2X, $this->getRedColor($backgroundColor), $this->getGreenColor($backgroundColor), $this->getBlueColor($backgroundColor), $backgroundAlpha);
 
         // set color for the trunk
         $colTrunk = imagecolorallocate($image2X, $this->getRedColor($trunkColor), $this->getGreenColor($trunkColor), $this->getBlueColor($trunkColor));
@@ -120,7 +125,7 @@ class TreeImage
         $colCrown = imagecolorallocate($image2X, $this->getRedColor($crownColor), $this->getGreenColor($crownColor), $this->getBlueColor($crownColor));
 
         // background fill
-        imagefilledrectangle($image2X, 0, 0, $widthImage2X - 1, $heightImage2X - 1, $bg);
+        imagefill($image2X, 0, 0, $bg);
 
         // create trunk
         imagefilledpolygon($image2X, $trunk2X, 3, $colTrunk);
@@ -130,6 +135,8 @@ class TreeImage
 
         // сompress the image to the desired size
         $this->image = imagecreatetruecolor($widthImage, $heightImage);
+        imagesavealpha($this->image, true);
+        imagefill($this->image, 0, 0, $bg);
         imagecopyresampled($this->image, $image2X, 0, 0, 0, 0, $widthImage, $heightImage, $widthImage2X, $heightImage2X);
 
         return $this;

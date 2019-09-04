@@ -6,29 +6,48 @@ use yii\db\ActiveRecord;
 
 class Apples extends ActiveRecord
 {
+    private $statuses = [
+        'handing',
+        'lay',
+        'decayed',
+    ];
+
     public function generateApples($count = 20)
     {
-        $userId = 1;
-        $treeId = 1;
+        for($i = 0; $i < $count; $i++){
+            $this->id = null;
+            $this->tree_id = 1;
 
-        $treeWidth = 200;
-        $treeHeight = 150;
-        $treeHalfWidth = $treeWidth / 2;
-        $treeHalfHeigh = $treeHeight / 2;
-        $heightTrunk = $treeHalfHeigh;
+            $colorToRgb = [
+                rand(0, 255),
+                rand(0, 255),
+                rand(0, 255),
+            ];
 
-        $colorToRgb = [
-            random_int(0, 255),
-            random_int(0, 255),
-            random_int(0, 255),
-        ]
+            $this->color = '#' . implode(array_map(function($decColor) {
+                return sprintf("%02s", dechex($decColor));
+            }, $colorToRgb));
 
-        $colorHex = '#' . implode(array_map(function($decColor) {
-            return dechex($decColor);
-        }, $colorToRgb));
+            $this->status = $this->statuses[rand(0, 2)];
 
-        $positionCrown = $this->generatePositionToCrown();
-        $positionGround = $this->generatePositionToGround();
+            if($this->status == 'handing'){
+                $positionCrown = $this->generatePositionToCrown();
+                $this->pos_x = $positionCrown['x'];
+                $this->pos_y = $positionCrown['y'];
+                $this->fell_in = null;
+            }else{
+                $positionGround = $this->generatePositionToGround();
+                $this->pos_x = $positionGround['x'];
+                $this->pos_y = $positionGround['y'];
+
+                $this->fell_in = date('Y-m-d H:i:s');
+                if($this->status == 'decayed'){
+                    $this->color = '#654321';
+                }
+            }
+
+            $this->insertInternal();
+        }
     }
 
     private function generatePositionToCrown ()
@@ -42,20 +61,20 @@ class Apples extends ActiveRecord
         $treeHalfHeigh = $dataTree['halfCrownHeigh'];
 
 
-        $posX = random_int(-$treeHalfWidth, $treeHalfWidth);
-        $posY = random_int(-$treeHalfHeigh, $treeHalfHeigh);
+        $posX = rand(-$treeHalfWidth, $treeHalfWidth);
+        $posY = rand(-$treeHalfHeigh, $treeHalfHeigh);
 
-        $ovalVer = (($posX * $posX) / ($treeHalfWidth * $treeHalfWidth)) + (($posY * $posY) / ($treeHalfHeigh * $treeHalfHeigh));
+        $ovalVerification = (($posX * $posX) / ($treeHalfWidth * $treeHalfWidth)) + (($posY * $posY) / ($treeHalfHeigh * $treeHalfHeigh));
 
-        if($ovalVer > 1){
-            $reductionRatio = sqrt($ovalVer);
+        if($ovalVerification > 1){
+            $reductionRatio = sqrt($ovalVerification);
             $posX /= $reductionRatio;
             $posY /= $reductionRatio;
         }
 
         return [
-            'x' => $treeCroneCenterPosX + $posX,
-            'y' => $treeCroneCenterPosY + $posY,
+            'x' => (int) ($treeCroneCenterPosX + $posX),
+            'y' => (int) ($treeCroneCenterPosY + $posY),
         ];
     }
 
@@ -67,23 +86,25 @@ class Apples extends ActiveRecord
 
         $treeHalfWidth = $dataTree['halfCrownWidth'];
 
-        $posX = random_int(-$treeHalfWidth, $treeHalfWidth);
+        $posX = rand(-$treeHalfWidth, $treeHalfWidth);
 
         return [
             'y' => 0,
-            'x' => $treeCroneCenterPosX + $posX,
+            'x' => (int) $treeCroneCenterPosX + $posX,
         ];
     }
 
     private function getDataByTree ()
     {
+        $width = 200;
+        $height = 500;
         return [
-            'crownCenterPosX' = 120,
-            'crownCenterPosY' = 150,
-            'crownWidth' => 200,
-            'crownHeight' => 150,
-            'halfCrownWidth' => 100,
-            'halfCrownHeigh' => 75,
+            'crownCenterPosX' => $width / 2,
+            'crownCenterPosY' => $height,
+            'crownWidth' => $width,
+            'crownHeight' => $height,
+            'halfCrownWidth' => $width / 2,
+            'halfCrownHeigh' => $height / 2,
         ];
     }
 }

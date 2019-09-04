@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use Yii;
 use yii\db\ActiveRecord;
 
 class Apples extends ActiveRecord
@@ -14,9 +15,9 @@ class Apples extends ActiveRecord
 
     public function generateApples($count = 20)
     {
+        $data = [];
         for($i = 0; $i < $count; $i++){
-            $this->id = null;
-            $this->tree_id = 1;
+            $treeId = 1;
 
             $colorToRgb = [
                 rand(0, 255),
@@ -24,30 +25,46 @@ class Apples extends ActiveRecord
                 rand(0, 255),
             ];
 
-            $this->color = '#' . implode(array_map(function($decColor) {
+            $color = '#' . implode(array_map(function($decColor) {
                 return sprintf("%02s", dechex($decColor));
             }, $colorToRgb));
 
-            $this->status = $this->statuses[rand(0, 2)];
+            $status = $this->statuses[rand(0, 2)];
 
-            if($this->status == 'handing'){
+            if($status == 'handing'){
                 $positionCrown = $this->generatePositionToCrown();
-                $this->pos_x = $positionCrown['x'];
-                $this->pos_y = $positionCrown['y'];
-                $this->fell_in = null;
+                $posX = $positionCrown['x'];
+                $posY = $positionCrown['y'];
+                $fellIn = null;
             }else{
                 $positionGround = $this->generatePositionToGround();
-                $this->pos_x = $positionGround['x'];
-                $this->pos_y = $positionGround['y'];
+                $posX = $positionGround['x'];
+                $posY = $positionGround['y'];
 
-                $this->fell_in = date('Y-m-d H:i:s');
-                if($this->status == 'decayed'){
-                    $this->color = '#654321';
+                $fellIn = date('Y-m-d H:i:s');
+                if($status == 'decayed'){
+                    $color = '#654321';
                 }
             }
 
-            $this->insertInternal();
+            $data[] = [
+                $treeId,
+                $color,
+                $status,
+                $posX,
+                $posY,
+                $fellIn,
+            ];
         }
+
+        Yii::$app->db->createCommand()->batchInsert('apples', [
+            'tree_id',
+            'color',
+            'status',
+            'pos_x',
+            'pos_y',
+            'fell_in',
+        ], $data)->execute();
     }
 
     private function generatePositionToCrown ()

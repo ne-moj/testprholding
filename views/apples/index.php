@@ -1,9 +1,21 @@
 <?php
-
-/* @var $this yii\web\View */
+use Yii;
 use yii\helpers\Html;
 
 $this->title = 'Apples';
+$this->registerJsFile(Yii::$app->request->baseUrl . '/js/jquery.min.js', array('position' => $this::POS_HEAD), 'jquery');
+
+$this->registerCss('
+    .apple {
+        width: 16px;
+        height: 16px;
+        border-width: 1px;
+        border-style: solid;
+        border-radius: 8px;
+        border-color: white;
+        position: absolute;
+    }
+');
 ?>
 <div class="site-index">
 
@@ -31,13 +43,13 @@ $this->title = 'Apples';
 <?php
     else:
 ?>
-        <?= Html::img('/images/tree_200x500.png') ?>
+        <?= Html::img($treeImage) ?>
         <div class="row">
-            <div class="col-lg-12">
+            <div class="col-lg-12" style="position:relative; left: 8px; top: -8px;">
 <?php
         foreach($apples as $apple):
 ?>
-<div class='apple' style="background-color: <?= $apple->color ?>; width:16px; height:16px; border-radius:8px;position:absolute;top:-<?= $apple->pos_y + 8; ?>px;left:<?= $apple->pos_x + 8; ?>px"></div>
+                <div class='apple' style="background-color: <?= $apple->color ?>; top:-<?= $apple->pos_y; ?>px;left:<?= $apple->pos_x; ?>px"></div>
 <?php
         endforeach;
 ?>

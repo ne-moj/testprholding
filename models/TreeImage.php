@@ -2,14 +2,6 @@
 
 namespace app\models;
 
-use Yii;
-
-/**
- * LoginForm is the model behind the login form.
- *
- * @property User|null $user This property is read-only.
- *
- */
 class TreeImage
 {
     private $image = null;
@@ -24,6 +16,9 @@ class TreeImage
 
     public $smoothing       = 4;
 
+    /*
+     * @param array $params
+     */
     public function __construct($params = array())
     {
         $this->width           = !empty($params['width'])           ? $params['width']           : $this->width;
@@ -47,6 +42,7 @@ class TreeImage
      *
      * @param string $file
      * @param string $type
+     * @return Tree
      */
     public function saveToFile($file, $type = 'png')
     {
@@ -72,10 +68,14 @@ class TreeImage
             default:
                 imagepng($this->image, $file);
         }
+
+        return $this;
     }
 
     /**
-     * Create a tree
+     * Create a tree image
+     *
+     * @return Tree
      */
     public function create()
     {
@@ -142,6 +142,12 @@ class TreeImage
         return $this;
     }
 
+    /*
+     * Get red color from hex value
+     *
+     * @param string $color (hex color)
+     * @return integer
+     */
     private function getRedColor ($color)
     {
         $hex = substr($color, 1, 2);
@@ -149,6 +155,12 @@ class TreeImage
         return hexdec($hex);
     }
 
+    /*
+     * Get green color from hex value
+     *
+     * @param string $color (hex color)
+     * @return integer
+     */
     private function getGreenColor ($color)
     {
         $hex = substr($color, 3, 2);
@@ -156,6 +168,12 @@ class TreeImage
         return hexdec($hex);
     }
 
+    /*
+     * Get blue color from hex value
+     *
+     * @param string $color (hex color)
+     * @return integer
+     */
     private function getBlueColor ($color)
     {
         $hex = substr($color, 5, 2);

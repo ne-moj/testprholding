@@ -3,7 +3,7 @@
 namespace app\controllers;
 
 use yii\web\Controller;
-use app\models\Apples;
+use app\models\Apple;
 
 class ApplesController extends Controller
 {
@@ -14,14 +14,25 @@ class ApplesController extends Controller
      */
     public function actionIndex()
     {
-        $apples = Apples::find()->orderBy('created_at')->all();
-        return $this->render('index', ['apples' => $apples]);
+        $apples = Apple::find()->orderBy('created_at')->all();
+        $tree = Apple::getTree();
+        
+        return $this->render('index', ['apples' => $apples, 'treeImage' => $tree->getUrlImage()]);
+    }
+
+    /**
+     * Test apple functionality
+     *
+     * @return string
+     */
+    public function actionTestApple()
+    {
+        //Apple::generateApples();
     }
 
     public function actionGenerate()
     {
-        $apple = new Apples();
-        $apple->generateApples();
+        Apple::generateApples();
 
         return $this->actionIndex();
     }

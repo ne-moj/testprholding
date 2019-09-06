@@ -17,12 +17,6 @@ class Apple extends ActiveRecord
 {
     /*
      * @static
-     * @var Tree|null
-     */
-    private static $tree = null;
-
-    /*
-     * @static
      * @var array
      */
     public static $statuses = [
@@ -41,12 +35,22 @@ class Apple extends ActiveRecord
         return $prefix . 'apples';
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    public static function find()
+    {
+        $tree = Tree::getByUser();
+
+        return parent::find()->where(['tree_id' => $tree->id]);
+    }
+
     /*
      * @param string $color (hex value)
      */
     public function __construct($color = null, $status = null)
     {
-        $tree = self::getTree();
+        $tree = Tree::getByUser();
 
         $this->tree_id    = $tree->id;
         $this->status     = !empty($status) && in_array($status, self::$statuses) ? $status : self::generateStatus();
@@ -175,7 +179,7 @@ class Apple extends ActiveRecord
      */
     public static function generateApples($count = 20)
     {
-        $tree = self::getTree();
+        $tree = Tree::getByUser();
 
         $data = [];
         for($i = 0; $i < $count; $i++){
@@ -209,19 +213,24 @@ class Apple extends ActiveRecord
         ], $data)->execute();
     }
 
-    /*
-     * Get the tree associated with the current user
-     *
-     * @static
-     * @return Tree
-     */
-    public static function getTree()
+    public static function regenerateApples($count = null)
     {
-        if(self::$tree === null){
-            self::$tree = Tree::getByUser();
+        self::deleteAll();
+        self::generateApples($count);
+    }
+
+    public static function deleteAll ($condition = null, $params = array())
+    {
+        $tree = Tree::getByUser();
+        if(is_string($condition)){
+            $condition = array($condition);
+        }elseif(is_null($condition)){
+            $condition = array();
         }
 
-        return self::$tree;
+        $condition = array_merge($condition, ['tree_id' => $tree->id]);
+
+        return parent::deleteAll($condition, $params);
     }
 
     /*
@@ -261,7 +270,20 @@ class Apple extends ActiveRecord
      */
     protected static function generateStatus()
     {
-        return self::$statuses[rand(0, 2)];
+        // hanging 70%
+        // lay 20%
+        // decayed 10%
+        $random = rand(0, 9);
+        
+        if($random < 7) {
+            $status = APPLE_HANGING;
+        } elseif($random < 9) {
+            $status = APPLE_LAY;
+        } else {
+            $status = APPLE_DECAYED;
+        }
+
+        return $status;
     }
 
     /*
@@ -318,21 +340,25 @@ class Apple extends ActiveRecord
      */
     protected static function generatePositionToCrown ()
     {
-        $dataTree = self::getTree()->getDataByTree();
+        $dataTree = Tree::getByUser()->getDataByTree();
 
         $treeCroneCenterPosX = $dataTree['crownCenterPosX'];
         $treeCroneCenterPosY = $dataTree['crownCenterPosY'];
 
         $treeHalfWidth = $dataTree['halfCrownWidth'];
-        $treeHalfHeigh = $dataTree['halfCrownHeigh'];
+        $treeHalfHeight = $dataTree['halfCrownHeight'];
 
 
         $posX = rand(-$treeHalfWidth, $treeHalfWidth);
-        $posY = rand(-$treeHalfHeigh, $treeHalfHeigh);
+        $posY = rand(-$treeHalfHeight, $treeHalfHeight);
 
-        $ovalVerification = (($posX * $posX) / ($treeHalfWidth * $treeHalfWidth)) + (($posY * $posY) / ($treeHalfHeigh * $treeHalfHeigh));
+        // Check the coordinates located inside the oval (crown) (x^2/a^2 + y^2/b^2) == 1 for ellipse
+        $ovalVerification = (($posX * $posX) / ($treeHalfWidth * $treeHalfWidth)) + (($posY * $posY) / ($treeHalfHeight * $treeHalfHeight));
 
         if($ovalVerification > 1){
+            // If they are beyond the oval (crown),
+            // I place them on the surface of the oval (crown),
+            // keeping the angle from the center
             $reductionRatio = sqrt($ovalVerification);
             $posX /= $reductionRatio;
             $posY /= $reductionRatio;
@@ -352,7 +378,7 @@ class Apple extends ActiveRecord
      */
     protected static function generatePositionToGround ()
     {
-        $dataTree = self::getTree()->getDataByTree();
+        $dataTree = Tree::getByUser()->getDataByTree();
 
         $treeCroneCenterPosX = $dataTree['crownCenterPosX'];
 

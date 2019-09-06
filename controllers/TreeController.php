@@ -4,41 +4,25 @@ namespace app\controllers;
 
 use Yii;
 use yii\web\Controller;
-use app\models\TreeImage;
+use app\models\Tree;
 
 class TreeController extends Controller
 {
     /**
-     * Displays homepage.
+     * Generate new tree and .
      *
      * @return string
      */
-    public function actionIndex($width = 200, $height = 150)
+    public function actionGenerate()
     {
-        $urlPath = $this->getUrlTree($width, $height);
-        return $this->render('index', ['image' => $urlPath]);
-    }
-
-    /**
-     * Get url for url by width-height
-     *
-     * @param int $width
-     * @param int $height
-     * @return string
-     */
-    private function getUrlTree($width, $height)
-    {
-        $width = (int)$width;
-        $height = (int)$height;
-        $relativePath = '/images/tree_' . $width . 'x' . $height . '.png';
-        $pathToFile = Yii::getAlias('@webroot') . $relativePath;
-        $urlPath = Yii::getAlias('@web') . $relativePath;
-
-        if(!file_exists($pathToFile)){
-            $image = new TreeImage(['width' => $width, 'height' => $height]);
-            $image->create()->saveToFile($pathToFile, 'png');
+        $user = Yii::$app->user;
+        if($user->isGuest){
+            $user->loginRequired();
         }
 
-        return $urlPath;
+        $tree = Tree::getByUser();
+        $tree->generate();
+
+        return $this->goBack();
     }
 }

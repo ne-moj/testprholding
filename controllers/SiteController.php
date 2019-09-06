@@ -9,8 +9,6 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
-use app\models\Apples;
-use app\models\Trees;
 
 class SiteController extends Controller
 {
@@ -63,7 +61,7 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        return $this->run('apples/index');
     }
 
     /**

@@ -16,6 +16,7 @@ $this->title = 'Apples';
 
     <div class="body-content">
         <div style='text-align: center'>
+            <?= Html::encode($count) ?>
             <?= Html::img($image) ?>
         </div>
     </div>

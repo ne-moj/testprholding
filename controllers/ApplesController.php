@@ -2,8 +2,10 @@
 
 namespace app\controllers;
 
+use Yii;
 use yii\web\Controller;
 use app\models\Apple;
+use app\models\Tree;
 
 class ApplesController extends Controller
 {
@@ -14,21 +16,18 @@ class ApplesController extends Controller
      */
     public function actionIndex()
     {
+        $user = Yii::$app->user;
+        if($user->isGuest){
+            $user->loginRequired();
+        }
+
         $apples = Apple::find()->orderBy('created_at')->all();
-        $tree = Apple::getTree();
+        $tree = Tree::getByUser();
+        $treeImage = $tree->getUrlImage();
         
-        return $this->render('index', ['apples' => $apples, 'treeImage' => $tree->getUrlImage()]);
+        return $this->render('index', compact('apples', 'tree', 'treeImage'));
     }
 
-    /**
-     * Test apple functionality
-     *
-     * @return string
-     */
-    public function actionTestApple()
-    {
-        //Apple::generateApples();
-    }
 
     public function actionGenerate()
     {

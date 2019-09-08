@@ -82,19 +82,8 @@ function showMyInfo(message)
     toastr['info'](message);
 }
 
-function showMyError(errorType)
+function showMyError(message)
 {
-    let message = '';
-    switch(errorType){
-        case 'appleDontDown':
-            message = 'Похоже яблоко очень крепко держиться на дереве, попробуйте сбить его в следующий раз или возможно проверьте подключение к интернету :)';
-            break;
-
-        
-        default:
-            message = errorType;
-    }
-
     toastr['error'](message);
 }
 

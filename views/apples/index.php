@@ -79,7 +79,16 @@ $this->registerCss('
 <?php
         foreach($apples as $apple):
 ?>
-                <a href="#" data-id="<?= $apple->id ?>" data-eaten="<?= $apple->eaten ?>" data-status="<?= $apple->status ?>" class='apple' style="background-color: <?= $apple->color ?>; top:-<?= $apple->pos_y; ?>px;left:<?= $apple->pos_x; ?>px"></a>
+                <a
+                    href="#"
+                    data-id="<?= $apple->id ?>"
+                    data-eaten="<?= $apple->eaten ?>"
+                    data-status="<?= $apple->status ?>"
+                    class='apple'
+                    style="background-color: <?= $apple->color ?>;
+                        top:-<?= $apple->pos_y; ?>px;
+                        left:<?= $apple->pos_x; ?>px"
+                ></a>
 <?php
         endforeach;
 ?>
@@ -97,6 +106,18 @@ $this->registerCss('
 $script = "
     $('document').ready(function() {
         initialToast();
+        $('.apple').mouseover(function() {
+            let apple = this;
+            let status = $(apple).data('status');
+            let eaten = $(apple).data('eaten');
+            if(status == 'hanging'){
+                apple.title = 'Висит на дереве, съесть не получится';
+            }else if(status == 'lay'){
+                apple.title = 'Можно есть! Съедено: ' + eaten + '%';
+            }else{
+                apple.title = 'Гнилое, съесть не получится :(';
+            }
+        });
         $('.apple').click(function() {
             event.preventDefault()
             let apple = this;
@@ -122,11 +143,11 @@ $script = "
                         animateAppleDown(apple)
                         $(apple).data('status', 'lay');
                     }else{
-                        showMyError(result.message ? result.message : 'appleNotDown');
+                        showMyError(result.message);
                     }
                 };
                 error = function (xhr, ajaxOptions, thrownError) {
-                    showMyError('appleNotDown');
+                    showMyError('Похоже яблоко очень крепко держиться на дереве, попробуйте сбить его в следующий раз или возможно проверьте подключение к интернету :)');
                 };
 
                 ajaxToServer(url, {id: $(apple).data('id')}, success, error);
@@ -153,7 +174,7 @@ $script = "
                         success = function (data) {
                             let result = JSON.parse(data);
                             if(result.success){
-                                $(apple).data('eaten', slice);
+                                $(apple).data('eaten', eaten + slice);
 
                                 if(eaten + slice >= 100){
                                     apple.style.display = 'none';

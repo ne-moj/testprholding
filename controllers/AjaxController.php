@@ -56,7 +56,7 @@ class AjaxController extends Controller
         });
     }
 
-    public function checkAndTry(callable $success)
+    protected function checkAndTry(callable $success)
     {
         $user = Yii::$app->user;
         if($user->isGuest){
@@ -77,7 +77,7 @@ class AjaxController extends Controller
         }
     }
 
-    public function success($message = '')
+    protected function success($message = '')
     {
         $data = [
             'success' => 1,
@@ -87,7 +87,7 @@ class AjaxController extends Controller
         return json_encode($data);
     }
 
-    public function error($message)
+    protected function error($message)
     {
         $data = [
             'error' => 1,

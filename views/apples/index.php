@@ -22,6 +22,9 @@ $this->registerCss('
         border-color: white;
         position: absolute;
     }
+    .bitten-off {
+        clip: rect(0, 12px, 16px, 0);
+    }
     .modal-open .modal {
         display: flex !important;
         align-items: center;
@@ -84,7 +87,7 @@ $this->registerCss('
                     data-id="<?= $apple->id ?>"
                     data-eaten="<?= $apple->eaten ?>"
                     data-status="<?= $apple->status ?>"
-                    class='apple'
+                    class='apple<?= $apple->eaten > 0 ? ' betten-off' : '' ?>'
                     style="background-color: <?= $apple->color ?>;
                         top:-<?= $apple->pos_y; ?>px;
                         left:<?= $apple->pos_x; ?>px"
@@ -180,6 +183,7 @@ $script = "
                                     apple.style.display = 'none';
                                     showMySuccess('Поздравляем, вы съели яблоко!');
                                 }else{
+                                    $(apple).addClass('bitten-off');
                                     showMySuccess('Поздравляем, вы откусили ' + slice + '% яблока!');
                                 }
                             }else{

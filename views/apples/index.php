@@ -3,7 +3,14 @@ use yii\helpers\Url;
 use yii\helpers\Html;
 
 $this->title = 'Apples';
+$this->registerCssFile(Yii::$app->request->baseUrl . '/css/bootstrap.min.css', array('position' => $this::POS_HEAD), 'bootstrap');
+$this->registerCssFile(Yii::$app->request->baseUrl . '/css/toast.min.css', array('position' => $this::POS_HEAD), 'toast');
 $this->registerJsFile(Yii::$app->request->baseUrl . '/js/jquery.min.js', array('position' => $this::POS_HEAD), 'jquery');
+$this->registerJsFile(Yii::$app->request->baseUrl . '/js/bootstrap.min.js', array('position' => $this::POS_HEAD), 'bootstrap');
+$this->registerJsFile(Yii::$app->request->baseUrl . '/js/bootbox.min.js', array('position' => $this::POS_END), 'bootbox');
+$this->registerJsFile(Yii::$app->request->baseUrl . '/js/bootbox.locales.min.js', array('position' => $this::POS_END), 'bootbox-locales');
+$this->registerJsFile(Yii::$app->request->baseUrl . '/js/toast.min.js', array('position' => $this::POS_END), 'toast');
+$this->registerJsFile(Yii::$app->request->baseUrl . '/js/main.js', array('position' => $this::POS_END), 'main');
 
 $this->registerCss('
     .apple {
@@ -14,6 +21,11 @@ $this->registerCss('
         border-radius: 8px;
         border-color: white;
         position: absolute;
+    }
+    .modal-open .modal {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
     }
 ');
 ?>
@@ -44,32 +56,37 @@ $this->registerCss('
 <?php
     else:
 ?>
-        <div style="float:left"><?= Html::img($treeImage) ?></div>
-        <div style="display:flex; height:<?= $tree->height ?>px;">
-            <div style="display:table; overflow: auto; padding: 20px">
-                <div style="display:table-cell; vertical-align:middle">
-                    <h3>Условия</h3>
-                    <ul>
-                        <li>Пока яблоко висит на дереве - испортиться не может.</li>
-                        <li>Когда яблоко висит на дереве - съесть не получится.</li>
-                        <li>Чтобы сбить яблоко с дерева, нужно нажать на него мышью.</li>
-                        <li>Чтобы съесть яблоко, нужно нажать на него мышью, когда оно на земле.</li>
-                        <li>Если яблоко пролежало более 5 часов - оно испортилось.</li>
-                        <li>Когда испорчено - съесть не получится, но его можно выбросить.</li>
-                    </ul>
+        <div class="row">
+            <div style="float:left"><?= Html::img($treeImage) ?></div>
+            <div style="display:flex; height:<?= $tree->height ?>px;">
+                <div style="display:table; overflow: auto; padding: 20px">
+                    <div style="display:table-cell; vertical-align:middle">
+                        <h3>Условия</h3>
+                        <ul>
+                            <li>Пока яблоко висит на дереве - испортиться не может.</li>
+                            <li>Когда яблоко висит на дереве - съесть не получится.</li>
+                            <li>Чтобы сбить яблоко с дерева, нужно нажать на него мышью.</li>
+                            <li>Чтобы съесть яблоко, нужно нажать на него мышью, когда оно на земле.</li>
+                            <li>Если яблоко пролежало более 5 часов - оно испортилось.</li>
+                            <li>Когда испорчено - съесть не получится, но его можно выбросить.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12" style="position:relative; left: 8px; top: -8px;">
+            <div class="col-lg-12" style="position:relative; left: -8px; top: -8px;">
 <?php
         foreach($apples as $apple):
 ?>
-                <div data-id="<?= $apple->id ?>" class='apple' style="background-color: <?= $apple->color ?>; top:-<?= $apple->pos_y; ?>px;left:<?= $apple->pos_x; ?>px"></div>
+                <a href="#" data-id="<?= $apple->id ?>" data-eaten="<?= $apple->eaten ?>" class='apple' style="background-color: <?= $apple->color ?>; top:-<?= $apple->pos_y; ?>px;left:<?= $apple->pos_x; ?>px"></a>
 <?php
         endforeach;
 ?>
             </div>
+        </div>
+        <div style="display: none" id='apple-dialog'>
+            <p>Это тестовое диалоговое окно для примера</p>
         </div>
 <?php
     endif;
@@ -78,84 +95,59 @@ $this->registerCss('
 </div>
 <?php
 $script = "
-    function animate(options) {
-        let start = performance.now();
-
-        requestAnimationFrame(function animate(time) {
-            // timeFraction от 0 до 1
-            let timeFraction = (time - start) / options.duration;
-            if (timeFraction > 1) timeFraction = 1;
-
-            // текущее состояние анимации
-            let progress = options.timing(timeFraction)
-            
-            options.draw(progress);
-
-            if (timeFraction < 1) {
-            requestAnimationFrame(animate);
-            }
-
-        });
-    }
     $('document').ready(function() {
+        initialToast();
         $('.apple').click(function() {
+            event.preventDefault()
             let apple = this;
-            let appleDiv = this;
-            let posX = parseInt(appleDiv.style.top);
-            let posY = parseInt(appleDiv.style.left);
+            let posX = parseInt(apple.style.left);
+            let posY = parseInt(apple.style.top);
 
-            let runLoadingAnimate = true;
-            let loadingPosY = 0;
-            let incriment = Math.random() > 0.5 ? 1 : -1;
-            animate({
-                duration: 10000,
-                timing: function (timeFraction) {
-                    return timeFraction;
-                },
-                draw: function (progress) {
-                    if(runLoadingAnimate){
-                        if(loadingPosY < -5){
-                            incriment = 1;
-                        }else if(loadingPosY > 5){
-                            incriment = -1;
-                        }
-                        loadingPosY += incriment;
+            let rockingAppleId = 0;
+            let success = null;
+            let error = null;
 
-                        appleDiv.style.left = posY + loadingPosY + 'px';
-                        appleDiv.style.top = posX - Math.abs(loadingPosY) + 'px';
+            if(Math.abs(posY) > 0){
+                let url = '" . Yii::$app->request->baseUrl . Url::to(['/ajax/knock-down-apple']) . "'
+                rockingAppleId = animateRockingApple(apple);
+
+                success = function (data) {
+                    let result = JSON.parse(data);
+                    posY = parseInt(apple.style.top);
+                    apple.style.left = posX + 'px';
+                    console.log(result);
+                    if(result.success){
+                        cancelAnimation(rockingAppleId);
+                        animateAppleDown(apple)
+
+                        showMySuccess('Поздравляем, яблоко упало!');
+                    }else{
+                        showMyError(result.message ? result.message : 'appleNotDown');
                     }
-                }
-
-            });
-
-            $.ajax({
-                url: '" . Yii::$app->request->baseUrl . Url::to(['/ajax/knock-down-apple']) . "',
-                type: 'post',
-                data: {
-                    id : $(apple).data('id'),
-                    _crsf : '" . Yii::$app->request->getCsrfToken() . "'
-                },
-                success: function (data) {
-                    runLoadingAnimate = false;
-                    appleDiv.style.left = posY + 'px';
-
-                    animate({
-                        duration: 1000,
-                        timing: function (timeFraction) {
-                            return Math.pow(timeFraction, 10);
-                        },
-                        draw: function (progress) {
-                            appleDiv.style.top = posX - progress * posX + 'px';
-                        }
-
-                    });
-                },
-                error: function (xhr, ajaxOptions, thrownError) {
+                };
+                error = function (xhr, ajaxOptions, thrownError) {
                     console.log(xhr.status);
-                    console.log(thrownError);
-                }
-            });
+                    showMyError(thrownError);
+                };
 
+                ajaxToServer(url, {id: $(apple).data('id')}, success, error);
+            }else{
+                let eaten = $(apple).data('eaten');
+
+                bootbox.prompt({
+                    title: \"Съесть яблоко\",
+                    message: \"<h2>Съедено '\" + eaten + \"%' яблока.</h2><p>Выберете сколько хотите съесть яблока:</p>\",
+                    inputType: 'range',
+                    min: eaten,
+                    max: 100,
+                    step: 1,
+                    value: (100 - eaten) / 2,
+                    callback: function (result) {
+                        let url = '" . Yii::$app->request->baseUrl . Url::to(['/ajax/eat-apple']) . "'
+                        showMyInfo('Вы пытаетесь откусить: ' + result + '% яблока');
+                    }
+                });
+            }
         });
         $('.test-ajax').click(function() {
         });

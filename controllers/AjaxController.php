@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use Yii;
+use yii\base\Exception;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\Controller;
@@ -13,7 +14,7 @@ class AjaxController extends Controller
     public function __construct($id, $module, $config = [])
     {
         if(!Yii::$app->request->isAjax){
-//            throw new NotFoundHttpException();
+            throw new NotFoundHttpException();
         }
 
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -40,9 +41,13 @@ class AjaxController extends Controller
             return $this->error("Яблока {$data['id']} не существует");
         }
 
-        $apple->fallToGround();
+        try{
+            $apple->fallToGround();
+            return $this->success();
+        } catch (Exception $e) {
+            return $this->error($e->getMessage());
+        }
 
-        return $this->success();
     }
 
     public function success($message = '')

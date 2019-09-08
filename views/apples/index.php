@@ -79,7 +79,7 @@ $this->registerCss('
 <?php
         foreach($apples as $apple):
 ?>
-                <a href="#" data-id="<?= $apple->id ?>" data-eaten="<?= $apple->eaten ?>" class='apple' style="background-color: <?= $apple->color ?>; top:-<?= $apple->pos_y; ?>px;left:<?= $apple->pos_x; ?>px"></a>
+                <a href="#" data-id="<?= $apple->id ?>" data-eaten="<?= $apple->eaten ?>" data-status="<?= $apple->status ?>" class='apple' style="background-color: <?= $apple->color ?>; top:-<?= $apple->pos_y; ?>px;left:<?= $apple->pos_x; ?>px"></a>
 <?php
         endforeach;
 ?>
@@ -102,12 +102,14 @@ $script = "
             let apple = this;
             let posX = parseInt(apple.style.left);
             let posY = parseInt(apple.style.top);
+            let status = $(apple).data('status');
 
             let rockingAppleId = 0;
             let success = null;
             let error = null;
 
-            if(Math.abs(posY) > 0){
+            if(status == 'hanging'){
+                // hanging
                 let url = '" . Yii::$app->request->baseUrl . Url::to(['/ajax/knock-down-apple']) . "'
                 rockingAppleId = animateRockingApple(apple);
 
@@ -115,25 +117,22 @@ $script = "
                     let result = JSON.parse(data);
                     posY = parseInt(apple.style.top);
                     apple.style.left = posX + 'px';
-                    console.log(result);
                     if(result.success){
                         cancelAnimation(rockingAppleId);
                         animateAppleDown(apple)
-
-                        showMySuccess('Поздравляем, яблоко упало!');
+                        $(apple).data('status', 'lay');
                     }else{
                         showMyError(result.message ? result.message : 'appleNotDown');
                     }
                 };
                 error = function (xhr, ajaxOptions, thrownError) {
-                    console.log(xhr.status);
-                    showMyError(thrownError);
+                    showMyError('appleNotDown');
                 };
 
                 ajaxToServer(url, {id: $(apple).data('id')}, success, error);
-            }else{
+            }else if(status == 'lay'){
                 let eaten = $(apple).data('eaten');
-
+                let startVal = eaten + parseInt((100 - eaten) / 2);
                 bootbox.prompt({
                     title: \"Съесть яблоко\",
                     message: \"<h2>Съедено '\" + eaten + \"%' яблока.</h2><p>Выберете сколько хотите съесть яблока:</p>\",
@@ -141,10 +140,74 @@ $script = "
                     min: eaten,
                     max: 100,
                     step: 1,
-                    value: (100 - eaten) / 2,
-                    callback: function (result) {
+                    value: startVal,
+                    callback: function (slice) {
+                        if(slice === null){
+                            // cancel
+                            return ;
+                        }
+
+                        slice = slice - eaten;
+
                         let url = '" . Yii::$app->request->baseUrl . Url::to(['/ajax/eat-apple']) . "'
-                        showMyInfo('Вы пытаетесь откусить: ' + result + '% яблока');
+                        success = function (data) {
+                            let result = JSON.parse(data);
+                            if(result.success){
+                                $(apple).data('eaten', slice);
+
+                                if(eaten + slice >= 100){
+                                    apple.style.display = 'none';
+                                    showMySuccess('Поздравляем, вы съели яблоко!');
+                                }else{
+                                    showMySuccess('Поздравляем, вы откусили ' + slice + '% яблока!');
+                                }
+                            }else{
+                                showMyError(result.message);
+                            }
+                        };
+                        error = function (xhr, ajaxOptions, thrownError) {
+                            showMyError('Что-то пошло не так... Яблоко оказывается слишком твердым для ваших зубов, вы так и не смогли откусить от него ни кусочка');
+                        };
+                        ajaxToServer(url, {id: $(apple).data('id'), size: slice}, success, error);
+                    }
+                });
+            }else{
+                // decayed
+                bootbox.confirm({
+                    message: \"Это сгнившее яблоко, его нельзя съесть! Выбросить его?\",
+                    buttons: {
+                        confirm: {
+                            label: 'Да',
+                            className: 'btn-success'
+                        },
+                        cancel: {
+                            label: 'Нет',
+                            className: 'btn-danger'
+                        }
+                    },
+                    callback: function (result) {
+                        if(result === false){
+                            // cancel
+                            return ;
+                        }
+
+                        let url = '" . Yii::$app->request->baseUrl . Url::to(['/ajax/remove-apple']) . "'
+
+                        success = function (data) {
+                            let result = JSON.parse(data);
+                            if(result.success){
+                                apple.style.display = 'none';
+
+                                showMySuccess('Поздравляем, вы выбросили яблоко, теперь оно больше не побеспокоит Вас!');
+                            }else{
+                                showMyError(result.message);
+                            }
+                        };
+                        error = function (xhr, ajaxOptions, thrownError) {
+                            showMyError('Что-то пошло не так... Яблоко выскальзывает из ваших рук и продолжает лежать на земле');
+                        };
+
+                        ajaxToServer(url, {id: $(apple).data('id')}, success, error);
                     }
                 });
             }

@@ -3,7 +3,7 @@ CREATE TABLE `apple` (
     `tree_id` INT(11) UNSIGNED NOT NULL DEFAULT '0' ,
     `color` VARCHAR(7) NOT NULL DEFAULT '#00B454' ,
     `eaten` TINYINT UNSIGNED NOT NULL DEFAULT '0' ,
-    `status` ENUM('hanging','lay','decayed','') NOT NULL DEFAULT 'hanging' ,
+    `status` ENUM('hanging','lay','decayed') NOT NULL DEFAULT 'hanging' ,
     `pos_x` SMALLINT NOT NULL DEFAULT '0' ,
     `pos_y` SMALLINT NOT NULL DEFAULT '0' ,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ,

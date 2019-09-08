@@ -29,6 +29,35 @@ class AjaxController extends Controller
      */
     public function actionKnockDownApple()
     {
+        return $this->checkAndTry(function($apple, $data) {
+            $apple->fallToGround();
+            return $this->success();
+        });
+    }
+
+    public function actionEatApple()
+    {
+        return $this->checkAndTry(function($apple, $data) {
+            if(empty($data['size']) || ((int) $data['size']) == 0){
+                throw new Exception('Вы не откусили ни кусочка!');
+            }
+
+            $size = abs($data['size']);
+            $apple->eat($size);
+            return $this->success();
+        });
+    }
+
+    public function actionRemoveApple()
+    {
+        return $this->checkAndTry(function($apple, $data) {
+            $apple->delete();
+            return $this->success();
+        });
+    }
+
+    public function checkAndTry(callable $success)
+    {
         $user = Yii::$app->user;
         if($user->isGuest){
             return $this->error('Вы должны войти в свой аккаунт для того чтобы совершать эти действия');
@@ -42,12 +71,10 @@ class AjaxController extends Controller
         }
 
         try{
-            $apple->fallToGround();
-            return $this->success();
+            return $success($apple, $data);
         } catch (Exception $e) {
             return $this->error($e->getMessage());
         }
-
     }
 
     public function success($message = '')
